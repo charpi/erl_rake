@@ -1,0 +1,17 @@
+%% -*- erlang -*-
+%% Copyright (c) 2008 Nicolas Charpentier
+main([Application| Paths]) ->
+    try
+	[code:add_path(Path) || Path <- Paths],
+	edoc: application (list_to_atom (Application))
+    catch
+        E:R ->
+	    exit({E,R,erlang:get_stacktrace()})
+    end;
+main(_) ->
+    usage().
+        
+usage() ->
+    io:format("usage: make_doc <application_name> <application_path>\n"),
+    halt(1).
+

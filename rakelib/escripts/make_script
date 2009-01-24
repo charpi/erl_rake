@@ -1,0 +1,25 @@
+%% -*- erlang -*-
+%% Copyright (c) 2008 Nicolas Charpentier
+main([Style, Script, Outdir|Paths]) ->
+    try
+	Local = case Style of
+		    "local" ->
+			[local];
+		    _ ->
+			[]
+		end,
+	[code:add_pathz(Path) || Path <- Paths],
+	Options = [{path,[Outdir]},
+		   exref,
+		   {outdir,Outdir}] ++ Local,
+	systools:make_script(Script,Options)
+    catch
+        E:R ->
+	    exit({E,R,erlang:get_stacktrace()})
+    end;
+main(_) ->
+    usage().
+        
+usage() ->
+    io:format("usage: make_script <local/distrib> <release_name> <path> [<additional_code_path>]\n"),
+    halt(1).

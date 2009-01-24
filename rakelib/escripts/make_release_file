@@ -1,0 +1,37 @@
+%% -*- erlang -*-
+%% Copyright (c) 2008 Nicolas Charpentier
+main([File_in, File_out, VSN | Paths]) ->
+    try
+	[code:add_path(Path) || Path <- Paths],
+	Erts_version = erlang:system_info(version),
+	{ok, [Release_info]} = file:consult(File_in),
+ 	Full_Release_info = update_release_info(Release_info, VSN, Erts_version),
+ 	{write_file,ok} = {write_file,file:write_file(File_out, io_lib: fwrite("~p.",[Full_Release_info]))}
+    catch
+        E:R ->
+	    exit({E,R,erlang:get_stacktrace()})
+    end.
+
+update_release_info({release, 
+		     {Name, _},
+		     {erts, _},
+		     Applications}, VSN, Erts_version) ->
+    New_applications = version_application(Applications),
+    {release, {Name, VSN}, {erts, Erts_version}, New_applications}.
+
+
+version_application(Applications) ->
+    version_application(Applications, []).
+
+version_application([],Acc) ->
+    lists:reverse(Acc);
+version_application([{Name,_,_}|Tail], Acc) ->
+    do_version_application(Name, Tail, Acc);
+version_application([{Name,_}|Tail], Acc) ->
+    do_version_application(Name,Tail,Acc).
+
+do_version_application(Name,Tail,Acc) ->
+    application:load(Name),
+    Loaded = application:loaded_applications(),
+    {value, {Name,_,Version}} = lists:keysearch(Name, 1, Loaded),
+    version_application(Tail, [{Name, Version}|Acc]).

@@ -1,0 +1,22 @@
+%% -*- erlang -*-
+%% Copyright (c) 2008 Nicolas Charpentier
+main([Script, Output, With_Erts, Erts_dir|Paths]) ->
+    try
+	[code:add_path(Path) || Path <- Paths],
+	Options = [{outdir, Output}, {dirs, []}, {path,Paths}],
+	systools:make_tar(Script, Options ++ options(With_Erts, Erts_dir))
+    catch
+        E:R ->
+	    exit({E,R,erlang:get_stacktrace()})
+    end;
+main(_) ->
+    usage().
+        
+options ("with", Erts_dir) ->
+    [{erts,Erts_dir}];
+options (_, _) ->
+    [].
+
+usage() ->
+    io:format("usage: make_release <release_name> \"with/without\" <erts_dir> [<additional_code_path>]\n"),
+    halt(1).

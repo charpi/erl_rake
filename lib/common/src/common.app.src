@@ -1,0 +1,8 @@
+{application, common,
+[{description, ""},
+{author, ""},
+{vsn, %VSN%},
+{modules, %MODULES%},
+{registered, []},
+{applications, [kernel, stdlib, sasl]}
+]}.

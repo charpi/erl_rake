@@ -1,0 +1,2 @@
+{inparallel, 2,[{application, sample_rake}]}.
+

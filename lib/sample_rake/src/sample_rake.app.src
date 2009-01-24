@@ -1,0 +1,8 @@
+{application, sample_rake,
+ [{description, "Sample application for Rake post"},
+  {author, "Nicolas Charpentier"},
+  {vsn, %VSN%},
+  {modules, %MODULES%},
+  {registered, []},
+  {applications, [kernel, stdlib, sasl, mnesia]}
+ ]}.

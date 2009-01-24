@@ -1,0 +1,10 @@
+%% -*-erlang-*-   ; 
+{release,
+ {"sample_rake", ""},
+ {erts, "_"},
+ [{kernel, "_"},
+  {stdlib, "_"},
+  {sasl, "_"},
+  {mnesia, "_"},
+  {sample_rake, "_"}]
+}.
