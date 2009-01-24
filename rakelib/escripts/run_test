@@ -12,9 +12,9 @@ main(_) ->
     usage().
         
 run_test("application", Application) ->
-    eunit:test({application, list_to_atom(Application)},[verbose]);
+    eunit:test({application, list_to_atom(Application)},[]);
 run_test("file", File) ->
-    eunit:test({file, File},[verbose]).
+    eunit:test({file, File},[]).
     
 usage() ->
     io:format("usage: run_test \"application\"|\"file\" <application_name|file_name> <application_path>\n"),
