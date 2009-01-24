@@ -1,16 +1,25 @@
 Sample erlang application to demonstrate the use of rake tasks dedicated to erlang.
 
-
 = Installation = 
 
 Put in your project the directory 'rakelib' it contains all '.rake'
 files and some escript needed by tasks.
 
-Your project have to be consistent with the OTP directory structure
-recommendation:
+= Usage = 
+rake --tasks : to know all tasks
 
+You'll need a configuration in which you'll have to put things specific to your installation.
+A template of file is generated the first time you launch 'rake'
 
-rake --tasks : To know which tasks are available
+Here is some useful tasks:
+rake erlang:modules: Compile all erlang source files (test included)
+rake erlang:releases: Build a tarball for each rel file found in the directory tree
+rake erlang:tests[name]: Run the eunit test for the application "name". If no name is given, 
+     all applications are tested. If a file test.desc is find in the "app_name/test" directory, eunit will
+     use it as eunit test description.
+rake erlang:edoc[name]: Build the document for an application or all if 'name' is omitted
+rake otp:new_application[name]: Create a new application squeleton
+rake otp:start_local[name]: Start a release in the developper environment
 
-
-
+= Author = 
+Nicolas Charpentier <open_source@charpi.net>
