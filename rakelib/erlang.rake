@@ -14,7 +14,6 @@ else
     file.write("ERLC_FLAGS=\"\"\n")
     file.write("ERL_FLAGS=\"\"\n")
     file.write("USE_EMAKE=false\n")
-
   end
   exit(-1)
 end
@@ -258,7 +257,7 @@ namespace :erlang do
                                     .pathmap("lib/*/ebin/%f.rel"))},
                      "distribs"] do |t|
     source = t.source.ext("")
-    run_script("make_release", [source,"distribs","without",ERL_TOP] + ERL_DIRECTORIES)
+    run_script("make_release", [source,"distribs"] + ERL_DIRECTORIES)
   end
 
   ERL_ASN_SOURCES.each do |source|
@@ -331,15 +330,6 @@ namespace :erlang do
 
   desc "Build release tarball"
   task :releases => [:release_files] + ERL_RELEASE_ARCHIVES
-
-  # desc "Build release tarball with erts"
-  # task :target_systems, :n, :needs=> [:release_files] +
-  #   ERL_RELEASE_ARCHIVES do |t, args|
-  #   source = FileList.new("lib/*/ebin/#{args.n}*.rel").ext("")
-  #   mkdir "targets" rescue has_errors = true
-  #   run_script("make_release",[source,"targets","with",ERL_TOP] + ERL_DIRECTORIES)
-  # end
-  #CLEAN.include "targets"
 
   CLEAN.include "lib/*/doc/*.html"
   CLEAN.include "lib/*/doc/*.css"
