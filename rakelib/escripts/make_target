@@ -1,0 +1,81 @@
+%% -*- erlang -*-
+%% Copyright (c) 2008 Nicolas Charpentier
+main([Script, Temporary_dir, Output, Erts_dir|Paths]) ->
+    try
+	Release_config_dir = filename:join(["..",filename:dirname(Script),"..","release_config"]),
+	Archive_name = filename:basename(Script) ++ ".tar.gz",
+	{ok,[{_,{_,VSN},{erts,Erts_version},_}]} = file:consult(Script++".rel"),
+	VSN_dir = filename:join(["releases",VSN]),
+	io:format("~p~n",[Release_config_dir]),
+	Script_dir = filename:dirname(filename:join("..",escript:script_name())),
+
+
+	filelib:ensure_dir(filename:join(Temporary_dir, Archive_name)),
+	[code:add_path(Path) || Path <- Paths],
+	Options = [{outdir, Temporary_dir}, {dirs, []}, {path,Paths}, {erts,Erts_dir}],
+	io:fwrite("Bulding release archive~n"),
+	systools:make_tar(Script, Options),
+	
+	
+	
+	file:set_cwd(Temporary_dir),
+
+	ok = erl_tar:extract(Archive_name, [compressed]),
+	
+	io:fwrite("Creating additional directories~n"),
+	[file:make_dir(Dir) || Dir <- ["bin","config","log","pipes"]],
+	Names = ["run_erl","to_erl"],
+
+	io:fwrite("Copying binaries~n"),
+	[copy_to_bin(Erts_version,Name) || Name <- Names],
+
+	io:fwrite("Copying startup scripts~n"),
+	copy_startup_scripts(Script_dir,"bin"),
+
+	io:fwrite("Copying configuration scripts~n"),
+	copy_configuration_scripts(Release_config_dir,"bin", VSN_dir),
+	
+	io:fwrite("Creating start_erl.data~n"),
+	file:write_file("releases/start_erl.data", 
+			io_lib: fwrite("~s ~s",[Erts_version, VSN])),
+			
+	io:fwrite("Rebuilding archive file~n"),
+	{ok, Tar} = erl_tar:open(Archive_name,[write,compressed]),
+	Directories = ["bin", "config", "log", "pipes", "releases", "lib",
+		       "erts-"++ Erts_version],
+	[erl_tar:add(Tar, Dir, [verbose]) || Dir <- Directories],
+	
+	erl_tar:close(Tar),
+	file:set_cwd(".."),
+	io:fwrite("Copying archive file to ~p~n",[Output]),
+	file:copy(filename:join(Temporary_dir,Archive_name), filename:join(Output,Archive_name)),
+	ok
+    catch
+        E:R ->
+	    exit({E,R,erlang:get_stacktrace()})
+    end;
+main(_) ->
+    usage().
+        
+usage() ->
+    io:format("usage: make_target <release_name> <erts_dir> [<additional_code_path>]\n"),
+    halt(1).
+
+copy_startup_scripts(Path, Destination) ->
+    {ok,_} = file:copy(filename:join([Path,"template","start"]),
+		       filename:join(Destination,"start")),
+    {ok,_} =file:copy(filename:join([Path,"template","start_erl"]),
+		      filename:join(Destination,"start_erl")),
+    ok.
+
+copy_configuration_scripts(Dir, Binary_dir, Configuration_dir) ->
+    io:format("~p~n",[{Dir,Binary_dir, Configuration_dir}]),
+    {ok,_} = file:copy(filename:join([Dir,"startup.conf"]),
+		       filename:join(Binary_dir,"startup.conf")),
+    {ok,_} = file:copy(filename:join([Dir,"sys.config"]),
+		       filename:join(Configuration_dir,"sys.config")),
+    ok.
+
+copy_to_bin(Version, Name) ->
+    Dest = filename:join("bin",Name),
+    {ok,_} = file:copy(filename:join(["erts-"++Version,"bin","run_erl"]), Dest).

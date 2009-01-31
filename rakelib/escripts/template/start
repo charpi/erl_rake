@@ -1,0 +1,12 @@
+#!/bin/sh
+
+ROOTDIR=`pwd`
+export TERM=xterm
+export SHELL=/bin/bash
+export HEART_COMMAND="$ROOTDIR/bin/start"
+
+echo "Starting Erlang"
+RELDIR=$ROOTDIR/releases
+rm -f $ROOTDIR/erlang.log.?
+START_ERL_DATA=${1:-$RELDIR/start_erl.data}
+$ROOTDIR/bin/run_erl -daemon pipes/ $ROOTDIR/log "exec $ROOTDIR/bin/start_erl $ROOTDIR $RELDIR $START_ERL_DATA"
