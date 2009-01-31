@@ -37,5 +37,26 @@ namespace :otp do
       end
     end
   end
+
+  CLEAN.include('tmp')
+  CLEAN.include('targets')
   
+  desc "Build an initial empty target system"
+  task :initial_target, :name, :version, :needs => ["erlang:releases"] do |t,args|
+    release_name = FileList.new("lib/*/ebin/"+File.join(args.name+'-'+args.version+'.rel'))
+    release_archive = File.join('tmp',args.name+'-'+args.version+'.tar.gz')
+    
+    if not File.file?(release_name[0])
+      puts "The release #{args.name}-#{args.version} doesn't exist"
+      exit(-1)
+    end
+    
+    FileUtils.makedirs('tmp')
+    FileUtils.makedirs('targets')
+    run_script("make_target", [release_name.ext(""),"tmp","targets",ERL_TOP] +
+               ERL_DIRECTORIES)
+    
+  FileUtils.rm_r('tmp')
+
+  end
 end
