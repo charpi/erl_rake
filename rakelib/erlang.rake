@@ -14,6 +14,7 @@ else
     file.write("ERLC_FLAGS=\"\"\n")
     file.write("ERL_FLAGS=\"\"\n")
     file.write("USE_EMAKE=false\n")
+    file.write("EMAKE_COMPILE_OPTIONS = []\n")
   end
   exit(-1)
 end
@@ -182,9 +183,11 @@ namespace :erlang do
         
         source_directories.uniq.each do |elt|
           target_directory = elt.pathmap("%{src,ebin}X")
-          options = "[{outdir,\"#{target_directory}\"},{i, \"lib\"},{i,"\
-          "\"lib/*/include\"}]"
-          file.write("{\"#{elt}/*\",#{options}}.\n")
+          options = ["{outdir,\"#{target_directory}\"}",
+                     "{i, \"lib\"}",
+                     "{i,\"lib/*/include\"}"] + EMAKE_COMPILE_OPTIONS
+          option_string = "[#{options.join(',')}]" 
+          file.write("{\"#{elt}/*\",#{option_string}}.\n")
         end
       end
     end
