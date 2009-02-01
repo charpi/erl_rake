@@ -6,7 +6,6 @@ main([Script, Temporary_dir, Output, Erts_dir|Paths]) ->
 	Archive_name = filename:basename(Script) ++ ".tar.gz",
 	{ok,[{_,{_,VSN},{erts,Erts_version},_}]} = file:consult(Script++".rel"),
 	VSN_dir = filename:join(["releases",VSN]),
-	io:format("~p~n",[Release_config_dir]),
 	Script_dir = filename:dirname(filename:join("..",escript:script_name())),
 
 
@@ -69,7 +68,6 @@ copy_startup_scripts(Path, Destination) ->
     ok.
 
 copy_configuration_scripts(Dir, Binary_dir, Configuration_dir) ->
-    io:format("~p~n",[{Dir,Binary_dir, Configuration_dir}]),
     {ok,_} = file:copy(filename:join([Dir,"startup.conf"]),
 		       filename:join(Binary_dir,"startup.conf")),
     {ok,_} = file:copy(filename:join([Dir,"sys.config"]),

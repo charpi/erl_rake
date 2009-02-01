@@ -50,7 +50,7 @@ namespace :otp do
       puts "The release #{args.name}-#{args.version} doesn't exist"
       exit(-1)
     end
-    
+
     FileUtils.makedirs('tmp')
     FileUtils.makedirs('targets')
     run_script("make_target", [release_name.ext(""),"tmp","targets",ERL_TOP] +
