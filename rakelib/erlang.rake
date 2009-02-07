@@ -28,10 +28,9 @@ namespace :erlang do
   def collect_boot_files(releases)
     releases.collect { |elt|
       if elt =~ /^release/
-        local_boot = elt.pathmap("%d/start.boot")
+        local_boot = elt.ext("").pathmap("%d/%f.boot")
         file local_boot => elt do
           make_boot_file(elt.pathmap("%d"), elt.ext(""))
-          sh "mv #{elt.ext("boot")} #{local_boot}"
         end
         local_boot
       else
@@ -44,11 +43,11 @@ namespace :erlang do
     rel_sources.inject({}) do |acc,d|
       config_file = d.pathmap("%d/../vsn.config")
       vsn = extract_version_information(config_file,"release_name").gsub(/\"/,"")
-      directory "release_local/#{vsn}"
+      directory "release_local"
       map_expression = "%{src,ebin}X-" + vsn  + ".rel"
       rel_file = d.ext("").pathmap(map_expression) 
       acc[rel_file] = d
-      acc[rel_file.pathmap("release_local/#{vsn}/%f")] = d
+      acc[rel_file.pathmap("release_local/%f")] = d
       acc
     end
   end
