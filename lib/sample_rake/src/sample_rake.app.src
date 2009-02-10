@@ -3,6 +3,7 @@
   {author, "Nicolas Charpentier"},
   {vsn, %VSN%},
   {modules, %MODULES%},
-  {registered, []},
+  {mod, {sample_rake_app,[]}},
+  {registered, [sample_rake_sup]},
   {applications, [kernel, stdlib, sasl, mnesia]}
  ]}.

@@ -1,0 +1,4 @@
+{"0.2",
+ [{"0.1", [{restart_application, sample_rake}]}],
+ [{"0.1", [{restart_application, sample_rake}]}]
+}.
