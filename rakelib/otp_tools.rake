@@ -6,15 +6,28 @@ namespace :otp do
   
   directory "bin"
   directory "log"
-  
+  directory "pipes"
+
+  require 'rake/clean'
+
   CLEAN.include "bin"
   CLEAN.include "log"
+  CLEAN.include "pipes"
+
+  file 'bin/connect_local' do
+    File.open("bin/connect_local",'w') do |file|
+      file.write("#!/bin/sh \n")
+      file.write("#{ERL_TOP}/bin/to_erl pipes/ \n")
+      file.chmod(0755)
+    end
+  end
 
   file 'bin/start_local' do
     File.open("bin/start_local",'w') do |file|
       lines = ["# $1 = boot file to use",
                "# $2 = config_file to use",
                "# $3 = -daemon or nothing",
+               "#!/bin/sh ",
                "ROOTDIR=#{ERL_TOP}",
                "boot=$1",
                "shift",
@@ -22,7 +35,7 @@ namespace :otp do
                "shift",
                "daemon=$1",
                "shift",
-               "$ROOTDIR/bin/run_erl $daemon /tmp/ log \"exec bin/start_erl_local"\
+               "$ROOTDIR/bin/run_erl $daemon pipes/ log/ \"exec bin/start_erl_local"\
                " #{ERL_TOP} $boot $config $*\""]
       lines.each do |line|
         file.write(line)
@@ -59,11 +72,13 @@ namespace :otp do
     end
   end
   desc "Start a erlang system from a local release"
-  task :start_local, :name, :daemon, :needs => ["bin", "log","bin/start_local",
-                                               "bin/start_erl_local"] do |t, args|
+  task :start_local, :name, :daemon, :needs => ["bin", "log", "pipes",
+                                                "bin/connect_local",
+                                                "bin/start_local",
+                                                "bin/start_erl_local"] do |t, args|
     
     opt = if args.daemon 
-            "-daemon"
+            "\"-daemon\""
           else
             "\" \""
           end
