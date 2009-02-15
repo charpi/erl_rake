@@ -1,3 +1,4 @@
+
 # -*-ruby-*-
 # Copyright 2008-2009 Nicolas Charpentier
 # Distributed under BSD licence
@@ -54,7 +55,7 @@ namespace :erlang do
   
   def collect_generated_archives(releases)
     tmp = releases.delete_if { |elt| elt =~ /^release_local/ }
-    tmp = tmp.pathmap("distribs/%f").ext(".tar.gz")
+    tmp = tmp.pathmap("releases/%f").ext(".tar.gz")
     tmp
   end
   
@@ -97,7 +98,6 @@ namespace :erlang do
     erlang_source_dependencies + erlang_test_dependencies
   end
 
-
   def run_application_test(application, directories)
     application_name = application.pathmap("%f").ext("")
     run_script("run_test",["application", application_name] + directories)
@@ -113,17 +113,15 @@ namespace :erlang do
     sh "#{ERL_TOP}/bin/escript #{script_file} #{parameters.join(' ')}"
   end
 
-
   def make_boot_file(output, source)
     if output =~ /^release_local/
       style = "local"
     else
-      style = "distribs"
+      style = "releases"
     end
     run_script("make_script",[style, source, output] + ERL_DIRECTORIES)
   end
   
-
   ERL_SOURCES = FileList['lib/*/src/*.erl']
   ERL_BEAM = ERL_SOURCES.pathmap("%{src,ebin}X.beam")
 
@@ -150,7 +148,8 @@ namespace :erlang do
     CLEAN.include d
   end
 
-  directory "distribs"
+  directory "releases"
+  directory "applications"
   CLEAN.include "release_local"
 
   ERL_DIRECTORIES.each do |d| 
@@ -159,7 +158,6 @@ namespace :erlang do
   end
 
   CLEAN.include("lib/*/test/*.beam")
-
 
   if USE_EMAKE 
     def erlang_test_dependencies
@@ -241,7 +239,6 @@ namespace :erlang do
   end
 
   rule ".rel" => proc {|a| release_to_src(a)}  do |t|
-    
     configuration = t.source.pathmap("%d/../vsn.config")
     release_name = extract_version_information(configuration,"release_name")
     output = t.name.pathmap("%X.rel")
@@ -257,9 +254,9 @@ namespace :erlang do
   rule ".tar.gz" => [proc {|a|
                        FileList.new(a.ext("").ext("")\
                                     .pathmap("lib/*/ebin/%f.rel"))},
-                     "distribs"] do |t|
+                     "releases"] do |t|
     source = t.source.ext("")
-    run_script("make_release", [source,"distribs"] + ERL_DIRECTORIES)
+    run_script("make_release", [source,"releases"] + ERL_DIRECTORIES)
   end
 
   ERL_ASN_SOURCES.each do |source|
@@ -360,4 +357,14 @@ namespace :erlang do
   task :compile => [:modules, :applications, :tests]
 
   task :default => [:compile]
+
+  desc "Build Application packages"
+  task :package => [:applications] do
+    ERL_APPLICATIONS.each do |application|
+      application_directory = application.pathmap("%{ebin}d")
+      puts application_directory
+      name = application.pathmap("%f").ext("")
+      all_files = FileList.new(application_directory+"/*/*")
+    end
+  end
 end
