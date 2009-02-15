@@ -71,6 +71,7 @@ namespace :otp do
       file.chmod(0755)
     end
   end
+
   desc "Start a erlang system from a local release"
   task :start_local, :name, :daemon, :needs => ["bin", "log", "pipes",
                                                 "bin/connect_local",
