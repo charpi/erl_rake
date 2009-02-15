@@ -15,17 +15,15 @@ main([Script, Temporary_dir, Output, Erts_dir|Paths]) ->
 	io:fwrite("Bulding release archive~n"),
 	systools:make_tar(Script, Options),
 	
-	
-	
 	file:set_cwd(Temporary_dir),
 
 	ok = erl_tar:extract(Archive_name, [compressed]),
 	
 	io:fwrite("Creating additional directories~n"),
 	[file:make_dir(Dir) || Dir <- ["bin","config","log","pipes"]],
-	Names = ["run_erl","to_erl"],
-
+	
 	io:fwrite("Copying binaries~n"),
+	Names = ["run_erl","to_erl"],
 	[copy_to_bin(Erts_version,Name) || Name <- Names],
 
 	io:fwrite("Copying startup scripts~n"),
