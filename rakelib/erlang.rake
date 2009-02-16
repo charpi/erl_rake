@@ -73,7 +73,7 @@ namespace :erlang do
     modules = "[" + modules.join(', ') + "]"
   end
   
-  def check_dependencies (beam, file)
+  def check_dependencies (file)
     dependencies = []
     IO.foreach(file) { |line|
       header = if line =~ /^-include\("(.*)"\)/
@@ -87,8 +87,8 @@ namespace :erlang do
                  end
                end
       if header 
-        dependencies << "#{beam}: #{header}" 
-        dependencies <<  check_dependencies(beam, header)
+        dependencies << "#{header}"
+        dependencies <<  check_dependencies(header)
       end
     } if File.file?(file)
     dependencies.flatten
@@ -159,19 +159,33 @@ namespace :erlang do
 
   CLEAN.include("lib/*/test/*.beam")
 
+  def beam_dependencies_with_emake(beam, file) 
+    dependencies = check_dependencies(file).uniq
+    dependencies.collect { |dependency|
+      ["#{beam}: #{dependency}", "Emakefile: #{dependency}"]
+    } + ["#{beam} : #{file}", "#{beam}: Emakefile"]
+  end
+
+  def beam_dependencies(beam, file) 
+    dependencies = check_dependencies(file).uniq
+    dependencies.collect { |dependency|
+      ["#{beam}: #{dependency}"]
+    } + ["#{beam} : #{file}"]
+  end
+
   if USE_EMAKE 
     def erlang_test_dependencies
       FileList['lib/*/test/*.erl'].collect { |file|
         beam = file.pathmap("%X.beam")
-        ["#{beam}: Emakefile","#{beam}: #{file}"] + check_dependencies(beam, file).uniq
+        beam_dependencies_with_emake(beam, file) 
       }.flatten
     end
     
     def erlang_source_dependencies
       FileList['lib/*/src/*.erl'].collect { |file|
         beam = file.pathmap("%{src,ebin}X.beam")
-        ["#{beam}: Emakefile","#{beam}: #{file}"] + check_dependencies(beam, file).uniq
-      }.flatten
+        beam_dependencies_with_emake(beam, file)
+     }.flatten
     end
     
     file "Emakefile" => ERL_SOURCES + ERL_TESTS do |t|
@@ -187,26 +201,27 @@ namespace :erlang do
           file.write("{\"#{elt}/*\",#{option_string}}.\n")
         end
       end
+      sh "#{ERL_TOP}/bin/erl -noinput -s make all -s erlang halt "
     end
     CLEAN.include "Emakefile"
     
-    rule ".beam" =>  ["Emakefile"] do |t|
-      output = t.name.pathmap("%d")
-      sh "#{ERL_TOP}/bin/erl -noinput -s make all -s erlang halt "
-    end
+#     rule ".beam" =>  ["Emakefile"] do |t|
+#       output = t.name.pathmap("%d")
+#       sh "#{ERL_TOP}/bin/erl -noinput -s make all -s erlang halt "
+#     end
     
   else
     def erlang_test_dependencies
       FileList['lib/*/test/*.erl'].collect { |file|
         beam = file.pathmap("%X.beam")
-        ["#{beam}: #{file}"] + check_dependencies(beam, file).uniq
+        beam_dependencies(beam, file)
       }.flatten
     end
     
     def erlang_source_dependencies
       FileList['lib/*/src/*.erl'].collect { |file|
         beam = file.pathmap("%{src,ebin}X.beam")
-        ["#{beam}: #{file}"] + check_dependencies(beam, file).uniq
+        beam_dependencies(beam, file)
       }.flatten
     end
     
@@ -362,7 +377,6 @@ namespace :erlang do
   task :package => [:applications] do
     ERL_APPLICATIONS.each do |application|
       application_directory = application.pathmap("%{ebin}d")
-      puts application_directory
       name = application.pathmap("%f").ext("")
       all_files = FileList.new(application_directory+"/*/*")
     end
