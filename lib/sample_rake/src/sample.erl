@@ -7,7 +7,6 @@
 -include("bar.hrl").
 -include("Data.hrl").
 
-
 -export([atoms/0]).
 -export([breaks_xref/0]).
 
