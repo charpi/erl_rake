@@ -204,10 +204,11 @@ namespace :erlang do
     end
     CLEAN.include "Emakefile"
     
-    rule ".beam" =>  ["Emakefile"] do |t|
+    desc "Compile Erlang sources"
+    task :modules => ERL_DIRECTORIES + ERL_BEAM + ERL_BEAM_TESTS do
       sh "#{ERL_TOP}/bin/erl -noinput -s make all -s erlang halt "
     end
-    
+
   else
     def erlang_test_dependencies
       FileList['lib/*/test/*.erl'].collect { |file|
@@ -227,6 +228,10 @@ namespace :erlang do
       output = t.name.pathmap("%d")
       sh "#{ERL_TOP}/bin/erlc -Ilib #{ERLC_FLAGS} -o #{output} #{t.source}"
     end
+
+    desc "Compile Erlang sources"
+    task :modules => ERL_DIRECTORIES + ERL_BEAM + ERL_BEAM_TESTS
+
   end
   rule '.app' => ["%{ebin,src}X.app.src",
                   "%{ebin,src}d/../vsn.config"] do |t|
@@ -306,8 +311,6 @@ namespace :erlang do
     }
   end
 
-  desc "Compile Erlang sources"
-  task :modules => ERL_DIRECTORIES + ERL_BEAM + ERL_BEAM_TESTS
 
   desc "Run erlang unit test for all or a specific application."\
   "(No name given mean all applications)"
