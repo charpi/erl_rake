@@ -201,14 +201,12 @@ namespace :erlang do
           file.write("{\"#{elt}/*\",#{option_string}}.\n")
         end
       end
-      sh "#{ERL_TOP}/bin/erl -noinput -s make all -s erlang halt "
     end
     CLEAN.include "Emakefile"
     
-#     rule ".beam" =>  ["Emakefile"] do |t|
-#       output = t.name.pathmap("%d")
-#       sh "#{ERL_TOP}/bin/erl -noinput -s make all -s erlang halt "
-#     end
+    rule ".beam" =>  ["Emakefile"] do |t|
+      sh "#{ERL_TOP}/bin/erl -noinput -s make all -s erlang halt "
+    end
     
   else
     def erlang_test_dependencies
