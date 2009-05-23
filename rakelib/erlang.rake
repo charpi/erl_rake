@@ -26,6 +26,27 @@ import '.depend_erlang.mf'
 
 namespace :erlang do
   
+  def handle_test(mode, args)
+    directories = ERL_DIRECTORIES + ERL_DIRECTORIES.pathmap("%{ebin,test}X")
+    if args.name
+      description = "lib/" + args.name + "/test.desc"
+      if File.file?(description)
+        run_description_test(description, mode, args.name, directories)
+      else
+        run_application_test(args.name, mode, directories)
+      end
+    else
+      ERL_APPLICATIONS.each do |application|
+        description = application.pathmap("%{ebin,test}d/test.desc")
+        if File.file?(description)
+          run_description_test(description, mode, application, directories)
+        else
+          run_application_test(application, mode, directories)
+        end
+      end
+    end
+  end
+    
   def collect_boot_files(releases)
     releases.collect { |elt|
       if elt =~ /^release/
@@ -98,13 +119,14 @@ namespace :erlang do
     erlang_source_dependencies + erlang_test_dependencies
   end
 
-  def run_application_test(application, directories)
+  def run_application_test(application, mode, directories)
     application_name = application.pathmap("%f").ext("")
-    run_script("run_test",["application", application_name] + directories)
+    run_script("run_test",[mode, application_name, "all_tests"] + directories)
   end
 
-  def run_description_test(description, directories)
-    run_script("run_test",["file", description] + directories)
+  def run_description_test(description, mode, application, directories)
+    application_name = application.pathmap("%f").ext("")
+    run_script("run_test",[mode, application_name, description, ] + directories)
   end
 
   def run_script(script, parameters)
@@ -158,6 +180,7 @@ namespace :erlang do
   end
 
   CLEAN.include("lib/*/test/*.beam")
+  CLEAN.include("lib/*/cover")
 
   def beam_dependencies_with_emake(beam, file) 
     dependencies = check_dependencies(file).uniq
@@ -316,25 +339,15 @@ namespace :erlang do
   "(No name given mean all applications)"
   task :tests, :name, :needs => [:applications] + ERL_BEAM_TESTS do
     |t, args|
-    directories = ERL_DIRECTORIES + ERL_DIRECTORIES.pathmap("%{ebin,test}X")
-    if args.name
-      description = "lib/" + args.name + "/test.desc"
-      if File.file?(description)
-        run_description_test(description, directories)
-      else
-        run_application_test(args.name, directories)
-      end
-    else
-      ERL_APPLICATIONS.each do |application|
-        description = application.pathmap("%{ebin,test}d/test.desc")
-        if File.file?(description)
-          run_description_test(description, directories)
-        else
-          run_application_test(application, directories)
-        end
-      end
-    end
-    
+    handle_test("test", args)
+  end
+
+
+  desc "Run cover on unit test for all or a specific application."\
+  "(No name given mean all applications)"
+  task :cover, :name, :needs => [:applications] + ERL_BEAM_TESTS do
+    |t, args|
+    handle_test("cover", args)
   end
 
   desc "Build application resource file"
