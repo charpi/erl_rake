@@ -91,7 +91,7 @@ namespace :erlang do
   def application_modules(app_file)
     modules = FileList.new(app_file.pathmap("%d/*.beam")).pathmap("%f").ext("")
     modules = modules.map {|item| item.gsub(/^([A-Z].*)/, '\'\1\'')}
-    modules = "[" + modules.join(', ') + "]"
+    modules = modules.join(', ')
   end
   
   def check_dependencies (file)

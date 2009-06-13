@@ -2,7 +2,7 @@
  [{description, "Sample application for Rake post"},
   {author, "Nicolas Charpentier"},
   {vsn, %VSN%},
-  {modules, %MODULES%},
+  {modules, [%MODULES%]},
   {mod, {sample_rake_app,[]}},
   {registered, [sample_rake_sup]},
   {applications, [kernel, stdlib, sasl, mnesia]}

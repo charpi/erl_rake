@@ -2,7 +2,7 @@
 [{description, ""},
 {author, ""},
 {vsn, %VSN%},
-{modules, %MODULES%},
+{modules, [%MODULES%]},
 {registered, []},
 {applications, [kernel, stdlib, sasl]}
 ]}.
