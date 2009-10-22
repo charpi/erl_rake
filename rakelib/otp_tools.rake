@@ -2,7 +2,6 @@
 # Copyright 2009 Nicolas Charpentier
 # Distributed under BSD licence
 namespace :otp do
-
   
   directory "bin"
   directory "log"
@@ -92,24 +91,25 @@ namespace :otp do
 
   desc "Create a new OTP application"
   task :new_application, :name do |t, args|
-    root_directory = "lib/#{args.name}"
-    app_file_name = args.name + ".app.src"
-    mkdir root_directory
-    mkdir root_directory + "/src"
-    mkdir root_directory + "/test"
-    mkdir root_directory + "/include"
-    mkdir root_directory + "/priv"
-    mkdir root_directory + "/doc"
-    File.open(root_directory + "/vsn.config", 'w') do |file| 
-      file.write("{vsn,\"0.1\"}.")
+    app_name = args.name
+    root_directory = "lib/#{app_name}"
+    app_file_name = app_name + ".app.src"
+    FileUtils.mkdir_p root_directory
+    FileUtils.mkdir_p root_directory + "/src"
+    FileUtils.mkdir_p root_directory + "/test"
+    FileUtils.mkdir_p root_directory + "/include"
+    FileUtils.mkdir_p root_directory + "/priv"
+    FileUtils.mkdir_p root_directory + "/doc"
+    File.open(root_directory + "/vsn.config", 'a') do |file| 
+      file.write("{vsn,\"0.1\"}.\n")
     end
   
     File.open(root_directory + "/src/" + app_file_name, 'w') do |file|
-      lines = ["{application, " + args.name + ",\n",
+      lines = ["{application, " + app_name + ",\n",
                "[{description, \"\"},\n",
                "{author, \"\"},\n",
                "{vsn, %VSN%},\n",
-               "{modules, %MODULES%},\n",
+               "{modules, [%MODULES%]},\n",
                "{registered, []},\n",
                "{applications, [kernel, stdlib, sasl]}\n",
                "]}."]
@@ -119,6 +119,44 @@ namespace :otp do
     end
   end
 
+  ## Thanks to DangerDawson
+  desc "Create a new OTP release"
+  task :new_release, :name do |t, args|
+    release_name = args.name
+    root_directory = "lib/#{release_name}"
+    release_file_name = release_name + ".rel.src"
+    FileUtils.mkdir_p root_directory
+    FileUtils.mkdir_p root_directory + "/release_config"
+    FileUtils.mkdir_p root_directory + "/src"
+    File.open(root_directory + "/vsn.config", 'a') do |file| 
+      file.write("{release_name,\"initial\"}.\n")
+    end
+  
+    File.open(root_directory + "/src/" + release_file_name, 'w') do |file|
+      lines = ["{release,\n",
+               "{\"#{release_name}\", \"\"},\n",
+               "{erts, \"_\"},\n",
+               "[{kernel, \"_\"},\n",
+               "{stdlib, \"_\"},\n",
+               "{sasl, \"_\"},\n",
+               "{#{release_name}, \"_\"}]\n",
+               "}.\n" ]
+      lines.each do |line|
+        file.write(line)
+      end
+    end
+
+    File.open(root_directory + "/release_config/startup.conf", 'w') do |file| 
+      file.write("ERL_FLAGS=\"\"\n")
+      file.write("export ERL_FLAGS\n")
+    end
+    
+    File.open(root_directory + "/release_config/sys.config", 'w') do |file| 
+      file.write("[].")
+    end
+  end
+  ## End Thanks 
+
   CLEAN.include('tmp')
   CLEAN.include('targets')
   
@@ -127,7 +165,7 @@ namespace :otp do
     release_name = FileList.new("lib/*/ebin/"+File.join(args.name+'-'+args.version+'.rel'))
     release_archive = File.join('tmp',args.name+'-'+args.version+'.tar.gz')
     
-    if not File.file?(release_name[0])
+    if !File.file?(release_name[0])
       puts "The release #{args.name}-#{args.version} doesn't exist"
       exit(-1)
     end
@@ -137,6 +175,6 @@ namespace :otp do
     run_script("make_target", [release_name.ext(""),"tmp","targets",ERL_TOP] +
                ERL_DIRECTORIES)
     
-  FileUtils.rm_r('tmp')
+    FileUtils.rm_r('tmp')
   end
 end
