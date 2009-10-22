@@ -21,9 +21,10 @@ rake erlang:edoc[name]: Build the document for an application or all if 'name' i
 rake otp:new_application[name]: Create a new application squeleton
 rake otp:start_local[name]: Start a release in the developper environment
 
-rake otp:initial_targer[name,version]: Create a tarball with a 'ready' to deploy
+rake otp:initial_target[name,version]: Create a tarball with a 'ready' to deploy
      an erlang system running the release. To use the system, you have to provide
      2 startup files in a directory named 'release_config'. Look at the sample in the
      application sample_rake.
+
 = Author = 
 Nicolas Charpentier <open_source@charpi.net>
