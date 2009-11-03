@@ -379,7 +379,7 @@ namespace :erlang do
 
   desc "Run dialyzer"
   task :dialyzer do
-    sh "#{ERL_TOP}/bin/dialyzer --src -I lib -I lib/sample_rake/include -c #{ERL_DIRECTORIES.pathmap("%{ebin,src}X")}"
+    sh "#{ERL_TOP}/bin/dialyzer --src -I lib #{ERL_DIRECTORIES.pathmap("-I %{ebin,include}X")} #{ERL_DIRECTORIES.pathmap("-c %{ebin,src}X")}"
   end
 
   desc "Compile all projects"
