@@ -1,30 +1,86 @@
-Sample erlang application to demonstrate the use of rake tasks dedicated to erlang.
+h1. Description
+erl_rake is a set of scripts to build erlang application with 'rake'.
+To demonstrate the use of those scripts, erl_rake comes with sample
+applications.
 
-= Installation = 
-
-Put in your project the directory 'rakelib' it contains all '.rake'
-files and some escript needed by tasks.
-
-= Usage = 
-rake --tasks : to know all tasks
-
-You'll need a configuration in which you'll have to put things specific to your installation.
-A template of file is generated the first time you launch 'rake'
-
-Here is some useful tasks:
-rake erlang:modules: Compile all erlang source files (test included)
-rake erlang:releases: Build a tarball for each rel file found in the directory tree
-rake erlang:tests[name]: Run the eunit test for the application "name". If no name is given, 
-     all applications are tested. If a file test.desc is find in the "app_name/test" directory, eunit will
-     use it as eunit test description.
-rake erlang:edoc[name]: Build the document for an application or all if 'name' is omitted
-rake otp:new_application[name]: Create a new application squeleton
-rake otp:start_local[name]: Start a release in the developper environment
-
-rake otp:initial_target[name,version]: Create a tarball with a 'ready' to deploy
-     an erlang system running the release. To use the system, you have to provide
-     2 startup files in a directory named 'release_config'. Look at the sample in the
-     application sample_rake.
-
-= Author = 
+h2. Author
 Nicolas Charpentier <open_source@charpi.net>
+
+h1. How to use erlang rake libraries
+
+erl_rake is designed to be used in project using standard OTP
+directory layout.
+
+TOP_DIR/
+ +lib/
+  +app1/
+   +src/
+   +priv/
+   +doc/
+   +ebin/
+
+To build your project with rake and erl_rake, you have to put rakelib
+directory under your top directory.
+
+Once rakelib directory in place, you have to create 2 files in your TOP_DIR: a
+_Rakefile_ and a configuration file named _erlang_config.rb_
+Typical default Rakefile can be:
+==
+<pre>
+#-*-ruby-*-
+require 'rake'
+
+task :default => ["erlang:compile", "erlang:releases"]
+</pre>
+==
+
+and the erlang_config.rb:
+==
+<pre>
+ERL_TOP="/usr/local/lib/erlang"
+ERLC_FLAGS=""
+ERL_FLAGS=""
+USE_EMAKE=true
+EMAKE_COMPILE_OPTIONS = []
+</pre>
+
+To compile erlang sources you can use Emake or compile files one by
+one setting the configuration variable USE_EMAKE to true or false
+
+h1. Tasks
+
+Here is some details about rake tasks to build erlang stuff.
+
+h2. otp:new_application[name]
+
+Creates a new application skeleton.
+You can change the version number of the application modifying the
+file TOP_DIR/lib/<name>/vsn.config.
+
+h2. otp:new_release[name]
+
+Creates a new erlang release skeleton.
+You can change the name of the release modifying the file TOP_DIR/lib/<name>/vsn.config
+
+h2. erlang:compile
+
+Compile everything and run tests.
+
+h2. erlang:tests[name] and erlang:tests
+
+Runs tests of a given application or on each applications with eunit.
+If a file test.desc is found in the test directory of an application,
+we will use it as an eunit test description.
+
+h2. erlang:releases
+
+Builds a tarball for each rel file found in the directory tree.
+Releases tarball are generated in TOP_DIR/releases
+
+h2. otp:start_local[name] and otp:start_local[name,daemon]
+
+Starts a release in the developper environment.
+Release configuration can be provided in the directory
+TOP_DIR/lib/<rel>/release_config
+
+One node started, you can connect to it using TOP_DIR/connect_local.
