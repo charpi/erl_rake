@@ -8,7 +8,7 @@ Nicolas Charpentier <open_source@charpi.net>
 
 h1. How to use erlang rake libraries
 
-erl_rake is designed to be used in project using standard OTP
+erl_rake is designed to be used on project using standard OTP
 directory layout.
 
 TOP_DIR/
