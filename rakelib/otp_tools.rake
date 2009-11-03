@@ -82,8 +82,7 @@ namespace :otp do
           else
             "\" \""
           end
-    rel = ERL_RELEASE_FILES.find("#{args.name}-*.rel").first
-    
+    rel = FileList.new("lib/*/ebin/#{args.name}-*.rel").first
     boot = rel.ext("").pathmap("release_local/%f")
     conf = rel.pathmap("%d/../release_config/sys")
     sh "bin/start_local #{boot} #{conf} #{opt} #{ERL_FLAGS}"
