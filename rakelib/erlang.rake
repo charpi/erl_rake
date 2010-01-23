@@ -130,7 +130,7 @@ namespace :erlang do
   end
 
   def run_script(script, parameters)
-    script_file = "rakelib/escripts/" + script
+    script_file = File.dirname(__FILE__) + "/escripts/" + script
     #puts "#{ERL_TOP}/bin/escript #{script_file} #{parameters.join(' ')}"
     sh "#{ERL_TOP}/bin/escript #{script_file} #{parameters.join(' ')}"
   end
