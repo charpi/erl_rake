@@ -1,8 +1,8 @@
-
 # -*-ruby-*-
 # Copyright 2008-2009 Nicolas Charpentier
 # Distributed under BSD licence
 
+require 'rake/clean'
 
 if File.file?('erlang_config.rb') 
   require 'erlang_config'  

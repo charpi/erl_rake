@@ -1,13 +1,14 @@
 # -*-ruby-*-
 # Copyright 2009 Nicolas Charpentier
 # Distributed under BSD licence
+require 'rake/clean'
+
 namespace :otp do
   
   directory "bin"
   directory "log"
   directory "pipes"
 
-  require 'rake/clean'
 
   CLEAN.include "bin"
   CLEAN.include "log"
