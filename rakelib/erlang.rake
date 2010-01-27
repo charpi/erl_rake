@@ -390,7 +390,11 @@ namespace :erlang do
   end
 
   desc "Compile all projects"
+<<<<<<< HEAD:rakelib/erlang.rake
   task :compile => [:modules, :applications, :release_files]
+=======
+  task :compile => [:modules, :applications]
+>>>>>>> a325e00e8c7437a59d7f77ca12fe4889c4063e60:rakelib/erlang.rake
 
   task :default => [:compile]
 
