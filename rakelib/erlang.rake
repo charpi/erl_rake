@@ -390,7 +390,7 @@ namespace :erlang do
   end
 
   desc "Compile all projects"
-  task :compile => [:modules, :applications]
+  task :compile => [:modules, :applications, :release_files]
 
   task :default => [:compile]
 
