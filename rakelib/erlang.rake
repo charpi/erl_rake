@@ -27,7 +27,6 @@ else
   exit(-1)
 end
 
-require 'rake/clean'
 require 'rake/loaders/makefile'
 import '.depend_erlang.mf'
 
@@ -56,15 +55,7 @@ namespace :erlang do
     
   def collect_boot_files(releases)
     releases.collect { |elt|
-      if elt =~ /^release/
-        local_boot = elt.ext("").pathmap("%d/%f.boot")
-        file local_boot => elt do
-          make_boot_file(elt.pathmap("%d"), elt.ext(""))
-        end
-        local_boot
-      else
         elt.pathmap("%{src,ebin}X.boot")
-      end
     }
   end
   
@@ -72,19 +63,18 @@ namespace :erlang do
     rel_sources.inject({}) do |acc,d|
       config_file = d.pathmap("%d/../vsn.config")
       vsn = extract_version_information(config_file,"release_name").gsub(/\"/,"")
-      directory "release_local"
+
       map_expression = "%{src,ebin}X-" + vsn  + ".rel"
       rel_file = d.ext("").pathmap(map_expression) 
       acc[rel_file] = d
-      acc[rel_file.pathmap("release_local/%f")] = d
+#      directory "release_local"
+#      acc[rel_file.pathmap("release_local/%f")] = d
       acc
     end
   end
   
   def collect_generated_archives(releases)
-    tmp = releases.delete_if { |elt| elt =~ /^release_local/ }
-    tmp = tmp.pathmap("releases/%f").ext(".tar.gz")
-    tmp
+    releases.pathmap("distrib/%f").ext(".tar.gz")
   end
   
   def extract_version_information(file, type)
@@ -139,11 +129,11 @@ namespace :erlang do
   def run_script(script, parameters)
     script_file = File.dirname(__FILE__) + "/escripts/" + script
     #puts "#{ERL_TOP}/bin/escript #{script_file} #{parameters.join(' ')}"
-    sh "#{ERL_TOP}/bin/escript #{script_file} #{parameters.join(' ')}"
+    sh %{#{ERL_TOP}/bin/escript #{script_file} #{parameters.join(' ')}}
   end
 
   def make_boot_file(output, source)
-    if output =~ /^release_local/
+    if output =~ /^releases(.*)/
       style = "local"
     else
       style = "releases"
@@ -178,8 +168,9 @@ namespace :erlang do
   end
 
   directory "releases"
-  directory "applications"
-  CLEAN.include "release_local"
+
+  directory "distrib"
+  CLEAN.include "distrib"
 
   ERL_DIRECTORIES.each do |d| 
     directory d
@@ -263,11 +254,13 @@ namespace :erlang do
     task :modules => ERL_DIRECTORIES + ERL_BEAM + ERL_BEAM_TESTS
 
   end
+
   rule '.app' => ["%{ebin,src}X.app.src",
                   "%{ebin,src}d/../vsn.config"] do |t|
     configuration = t.name.pathmap("%d/../vsn.config")
     vsn = extract_version_information(configuration,"vsn")
     modules = application_modules t.name
+    app_name = t.name.pathmap("%f").ext("")
     File.open(t.name, 'w') do |outf|
       File.open(t.source) do |inf|
         inf.each_line do |ln|
@@ -275,15 +268,12 @@ namespace :erlang do
         end
       end
     end
+    run_script("check_dependency", [app_name] + ERL_DIRECTORIES)
   end
 
   def release_to_src(a)
-    if a =~ /^release/
-      [ERL_RELEASE_FILES_DEP[a], a.pathmap("%d") ]
-    else 
-      [ERL_RELEASE_FILES_DEP[a], a.pathmap("%d") ]
-    end
-
+    value = ERL_RELEASE_FILES_DEP[a]
+    [value, a.pathmap("%d") ]
   end
 
   rule ".rel" => proc {|a| release_to_src(a)}  do |t|
@@ -300,11 +290,10 @@ namespace :erlang do
   end
 
   rule ".tar.gz" => [proc {|a|
-                       FileList.new(a.ext("").ext("")\
-                                    .pathmap("lib/*/ebin/%f.rel"))},
-                     "releases"] do |t|
+                       FileList.new(a.ext("").ext("").pathmap("lib/*/ebin/%f.rel"))},
+                     "distrib"] do |t|
     source = t.source.ext("")
-    run_script("make_release", [source,"releases"] + ERL_DIRECTORIES)
+    run_script("make_release", [source,"distrib"] + ERL_DIRECTORIES)
   end
 
   ERL_ASN_SOURCES.each do |source|
@@ -349,7 +338,6 @@ namespace :erlang do
     handle_test("test", args)
   end
 
-
   desc "Run cover on unit test for all or a specific application."\
   "(No name given mean all applications)"
   task :cover, :name, :needs => [:applications] + ERL_BEAM_TESTS do
@@ -361,9 +349,9 @@ namespace :erlang do
   task :applications => [:modules] + ERL_APPLICATIONS
 
   desc "Build erlang boot files"
-  task :release_files => [:applications] + ERL_RELEASE_FILES  + ERL_BOOT_FILES
+  task :release_files => [:applications] + ERL_RELEASE_FILES + ERL_BOOT_FILES
 
-  desc "Build release tarball"
+  desc "Generate a release tarball in  the distrib directory"
   task :releases => [:release_files] + ERL_RELEASE_ARCHIVES
 
   CLEAN.include "lib/*/doc/*.html"
@@ -386,7 +374,7 @@ namespace :erlang do
 
   desc "Run dialyzer"
   task :dialyzer do
-    sh "#{ERL_TOP}/bin/dialyzer --src -I lib #{ERL_DIRECTORIES.pathmap("-I %{ebin,include}X")} #{ERL_DIRECTORIES.pathmap("-c %{ebin,src}X")}"
+    sh "#{ERL_TOP}/bin/dialyzer --src -I lib #{ERL_DIRECTORIES.pathmap("-I%{ebin,include}X")} #{ERL_DIRECTORIES.pathmap("-c %{ebin,src}X")} -Wunmatched_returns -Wunderspecs -Wspecdiffs --no_native"
   end
 
   desc "Compile all projects"
@@ -394,12 +382,4 @@ namespace :erlang do
 
   task :default => [:compile]
 
-  desc "Build Application packages"
-  task :package => [:applications] do
-    ERL_APPLICATIONS.each do |application|
-      application_directory = application.pathmap("%{ebin}d")
-      name = application.pathmap("%f").ext("")
-      all_files = FileList.new(application_directory+"/*/*")
-    end
-  end
 end

@@ -1,0 +1,42 @@
+%% -*- erlang -*-
+%% Copyright (c) 2010 Nicolas Charpentier
+
+main([Application_S | Paths]) ->
+    try
+	Application = list_to_atom(Application_S),
+	[code:add_path(P) || P <- Paths],
+	ok = application:load(Application),
+	{ok, Keys} = application:get_all_key(Application),
+	Deps = proplists:get_value(applications, Keys),
+	
+	{ok, XRef} = xref:start([{xref_mode, module}]),
+	xref:add_release(XRef, code:lib_dir(), [{name, otp}]),
+	xref:add_release(XRef, "lib", [{name, current}]),
+	{ok, Called} = xref:analyse(XRef, {application_call, Application}),
+	Filtered_Called = Called -- [erts, Application],
+	
+	check(Deps, Filtered_Called)
+    catch
+        E:R ->
+	    exit({E,R})
+    end.
+
+check(Deps, Called) ->
+    check(lists:sort(Deps), lists:sort(Called),[]).
+
+check([],[],[]) ->
+    ok;
+check([],[], Acc) ->
+    exit({no_dependencies_found, Acc});
+check([], All, []) ->
+    exit({missing_applications, All});
+check([], All, Acc) ->
+    exit([{missing_applications, All},
+	 {no_dependencies_found, Acc}]);
+check([H|T], Called, Acc) ->
+    case lists:member(H, Called) of
+	true ->
+	    check(T, Called -- [H], Acc);
+	_ ->
+	    check(T, Called, [H|Acc])
+    end.

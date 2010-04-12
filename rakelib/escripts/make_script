@@ -12,7 +12,7 @@ main([Style, Script, Outdir|Paths]) ->
 	Options = [{path,[Outdir]},
 		   exref,
 		   {outdir,Outdir}] ++ Local,
-	systools:make_script(Script,Options)
+	ok = systools:make_script(Script,Options)
     catch
         E:R ->
 	    exit({E,R,erlang:get_stacktrace()})

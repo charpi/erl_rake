@@ -7,13 +7,8 @@ main(_) ->
 
 run(Mode, Application, Type, Paths) ->
     F = execution_fun(Mode, Application, Type),
-    try
-	[code:add_path(Path) || Path <- Paths],
-	ok = F()
-    catch
-        E:R ->
-	    exit({E,R,erlang:get_stacktrace()})
-    end.
+    [code:add_path(Path) || Path <- Paths],
+    ok = F().
 
 execution_fun("test", Application, Type) ->
     fun() -> run_test(Application, Type) end;
