@@ -18,7 +18,7 @@ namespace :otp do
 
   desc "Start an erlang shell"
   task :shell do
-    sh %{#{ERL_TOP}/bin/erl -pa lib/*/ebin}
+    sh %{#{ERL_TOP}/bin/erl -pa lib/*/ebin -pa lib/*/test}
   end
 
   desc "Start release"

@@ -5,5 +5,5 @@
   {modules, [%MODULES%]},
   {mod, {sample_rake_app,[]}},
   {registered, [sample_rake_sup]},
-  {applications, [kernel, stdlib, sasl, mnesia]}
+  {applications, [stdlib, asn1]}
  ]}.

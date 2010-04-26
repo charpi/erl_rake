@@ -3,7 +3,7 @@
 main([Script, Output | Paths]) ->
     try
 	[code:add_path(Path) || Path <- Paths],
-	Options = [{outdir, Output}, {dirs, []}, {path,Paths}],
+	Options = [{outdir, Output}, {dirs, []}, {path, Paths}],
 	systools:make_tar(Script, Options)
     catch
         E:R ->

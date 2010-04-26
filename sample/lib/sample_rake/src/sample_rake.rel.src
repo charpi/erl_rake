@@ -6,5 +6,6 @@
   {stdlib, "_"},
   {sasl, "_"},
   {mnesia, "_"},
-  {sample_rake, "_"}]
+  {sample_rake, "_"},
+ {asn1, "_"}]
 }.

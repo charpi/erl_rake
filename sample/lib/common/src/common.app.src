@@ -4,5 +4,5 @@
 {vsn, %VSN%},
 {modules, [%MODULES%]},
 {registered, []},
-{applications, [kernel, stdlib, sasl]}
+{applications, []}
 ]}.

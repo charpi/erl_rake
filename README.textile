@@ -110,3 +110,7 @@ h4. otp:deploy
 
 Deploy a release locally. All start-up files are generated in order to use beam files located under TOP/lib.
 The configuration file used is a copy of TOP/AppX/release_config/sys.config
+
+h4. otp:start_release[version]
+
+Start the local release 'version'

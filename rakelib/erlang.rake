@@ -23,6 +23,8 @@ else
     file.write("#ERL_FLAGS are the flags to be passed to ERL when erl_rake\n")
     file.write("#start a node.\n")
     file.write("ERL_FLAGS=\"\"\n")
+    file.write("#Check app file for missing dependencies\n")
+    file.write("CHECK_APP=true\n")
   end
   exit(-1)
 end
@@ -208,7 +210,9 @@ namespace :erlang do
         beam_dependencies_with_emake(beam, file)
      }.flatten
     end
-    
+
+    rule '.beam' => "Emakefile"
+
     file "Emakefile" => ERL_SOURCES + ERL_TESTS do |t|
       source_directories = t.prerequisites.collect { |elt| elt.pathmap("%d")}
       File.open("Emakefile",'w') do |file|
@@ -227,7 +231,7 @@ namespace :erlang do
     
     desc "Compile Erlang sources"
     task :modules => ERL_DIRECTORIES + ERL_BEAM + ERL_BEAM_TESTS do
-      sh "#{ERL_TOP}/bin/erl -noinput -s make all -s erlang halt "
+      sh "#{ERL_TOP}/bin/erl -make"
     end
 
   else
@@ -268,7 +272,9 @@ namespace :erlang do
         end
       end
     end
-    run_script("check_dependency", [app_name] + ERL_DIRECTORIES)
+    if CHECK_APP
+      run_script("check_dependency", [app_name] + ERL_DIRECTORIES)
+    end
   end
 
   def release_to_src(a)
@@ -333,14 +339,14 @@ namespace :erlang do
 
   desc "Run erlang unit test for all or a specific application."\
   "(No name given mean all applications)"
-  task :tests, :name, :needs => [:applications] + ERL_BEAM_TESTS do
+  task :tests, [:name] => [:applications] + ERL_BEAM_TESTS do
     |t, args|
     handle_test("test", args)
   end
 
   desc "Run cover on unit test for all or a specific application."\
   "(No name given mean all applications)"
-  task :cover, :name, :needs => [:applications] + ERL_BEAM_TESTS do
+  task :cover, [:name] => [:applications] + ERL_BEAM_TESTS do
     |t, args|
     handle_test("cover", args)
   end
@@ -360,13 +366,36 @@ namespace :erlang do
   CLEAN.include "lib/*/doc/edoc-info"
 
   desc "Buid Application documentation"
-  task :edoc, :name, :needs => [:applications] do |t,args|
+  task :edoc, [:name] => [:applications] do |t,args|
     names = if args.name
-              [args.name]
+              FileList.new('lib/#{args.name}/src/*.app.src').pathmap(src_to_ebin)
             else
               ERL_APPLICATIONS
             end
     names.each do |application|
+      puts "#{application}"
+      configuration = application.pathmap("%d/../vsn.config")
+      vsn = extract_version_information(configuration,"vsn")
+      modules = application_modules t.name
+      
+      app_name = t.name.pathmap("%f").ext("")
+      
+      overview = application.pathmap("%d/../doc/overview.edoc")
+      tmp = application.pathmap("%d/../doc/overview.edoc.tmp")
+      out = File.open(tmp, 'w')
+      if File.file?(overview)
+        puts "=== #{overview}"
+        File.open(overview, 'r+') do |inf|
+          inf.each_line do |ln|
+            puts "#{ln}"
+            ln.gsub!('@version %VSN%', '@version #{vsn}')
+            out.write(ln)
+          end
+        end
+      end
+      out.close()
+      File.rename(tmp,overview)
+
       name = application.pathmap("%f").ext("")
       run_script("make_doc",[name] + ERL_DIRECTORIES)
     end
@@ -374,7 +403,7 @@ namespace :erlang do
 
   desc "Run dialyzer"
   task :dialyzer do
-    sh "#{ERL_TOP}/bin/dialyzer --src -I lib #{ERL_DIRECTORIES.pathmap("-I%{ebin,include}X")} #{ERL_DIRECTORIES.pathmap("-c %{ebin,src}X")} -Wunmatched_returns -Wunderspecs -Wspecdiffs --no_native"
+    sh "#{ERL_TOP}/bin/dialyzer --src -I lib #{ERL_DIRECTORIES.pathmap("-I%{ebin,include}X")} #{ERL_DIRECTORIES.pathmap("-c %{ebin,src}X")} #{ERL_DIRECTORIES.pathmap("-c %{ebin,test}X")} -Wunderspecs -Wspecdiffs --no_native"
   end
 
   desc "Compile all projects"
